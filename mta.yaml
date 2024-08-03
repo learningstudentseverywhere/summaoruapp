@@ -3,125 +3,130 @@ ID: summaoruapp
 description: A simple CAP project.
 version: 1.0.0
 modules:
-- name: summaoruapp-srv
-  type: nodejs
-  path: gen/srv
-  requires:
-  - name: summaoruapp-db
-  provides:
-  - name: srv-api
-    properties:
-      srv-url: ${default-url}
-  parameters:
-    buildpack: nodejs_buildpack
-    readiness-health-check-http-endpoint: /health
-    readiness-health-check-type: http
-  build-parameters:
-    builder: npm
-- name: summaoruapp-db-deployer
-  type: hdb
-  path: gen/db
-  requires:
-  - name: summaoruapp-db
-  parameters:
-    buildpack: nodejs_buildpack
-- name: summaoruapp-destination-content
-  type: com.sap.application.content
-  requires:
-  - name: summaoruapp-destination-service
-    parameters:
-      content-target: true
-  - name: summaoruapp_html_repo_host
-    parameters:
-      service-key:
-        name: summaoruapp_html_repo_host-key
-  - name: uaa_summaoruapp
-    parameters:
-      service-key:
-        name: uaa_summaoruapp-key
-  parameters:
-    content:
-      instance:
-        destinations:
-        - Name: summaoruapprouter_summaoruapp_html_repo_host
-          ServiceInstanceName: summaoruapp-html5-app-host-service
-          ServiceKeyName: summaoruapp_html_repo_host-key
-          sap.cloud.service: summaoruapprouter
-        - Authentication: OAuth2UserTokenExchange
-          Name: summaoruapprouter_uaa_summaoruapp
-          ServiceInstanceName: summaoruapp-xsuaa-service
-          ServiceKeyName: uaa_summaoruapp-key
-          sap.cloud.service: summaoruapprouter
-        existing_destinations_policy: ignore
-  build-parameters:
-    no-source: true
-- name: summaoruapp-app-content
-  type: com.sap.application.content
-  path: .
-  requires:
-  - name: summaoruapp_html_repo_host
-    parameters:
-      content-target: true
-  build-parameters:
-    build-result: resources
+  - name: summaoruapp-srv
+    type: nodejs
+    path: gen/srv
     requires:
-    - artifacts:
-      - namespsummaoruappui.zip
-      name: namespsummaoruappui
-      target-path: resources/
-- name: namespsummaoruappui
-  type: html5
-  path: app/summaoruappui
-  build-parameters:
-    build-result: dist
-    builder: custom
-    commands:
-    - npm install
-    - npm run build:cf
-    supported-platforms: []
-resources:
-- name: summaoruapp-db
-  type: com.sap.xs.hdi-container
-  parameters:
-    service: hana
-    service-plan: hdi-shared
-- name: summaoruapp-destination-service
-  type: org.cloudfoundry.managed-service
-  parameters:
-    config:
-      HTML5Runtime_enabled: true
-      init_data:
+      - name: summaoruapp-db
+      - name: uaa_summaoruapp
+    provides:
+      - name: srv-api
+        properties:
+          srv-url: ${default-url}
+    parameters:
+      buildpack: nodejs_buildpack
+      readiness-health-check-http-endpoint: /health
+      readiness-health-check-type: http
+    build-parameters:
+      builder: npm
+  - name: summaoruapp-db-deployer
+    type: hdb
+    path: gen/db
+    requires:
+      - name: summaoruapp-db
+    parameters:
+      buildpack: nodejs_buildpack
+  - name: summaoruapp-destination-content
+    type: com.sap.application.content
+    requires:
+      - name: summaoruapp-destination-service
+        parameters:
+          content-target: true
+      - name: summaoruapp_html_repo_host
+        parameters:
+          service-key:
+            name: summaoruapp_html_repo_host-key
+      - name: uaa_summaoruapp
+        parameters:
+          service-key:
+            name: uaa_summaoruapp-key
+    parameters:
+      content:
         instance:
           destinations:
-          - Authentication: NoAuthentication
-            Name: ui5
-            ProxyType: Internet
-            Type: HTTP
-            URL: https://ui5.sap.com
-          existing_destinations_policy: update
-      version: 1.0.0
-    service: destination
-    service-name: summaoruapp-destination-service
-    service-plan: lite
-- name: summaoruapp_html_repo_host
-  type: org.cloudfoundry.managed-service
-  parameters:
-    service: html5-apps-repo
-    service-name: summaoruapp-html5-app-host-service
-    service-plan: app-host
-- name: uaa_summaoruapp
-  type: org.cloudfoundry.managed-service
-  parameters:
-    path: ./xs-security.json
-    service: xsuaa
-    service-name: summaoruapp-xsuaa-service
-    service-plan: application
+            - Name: summaoruapprouter_summaoruapp_html_repo_host
+              ServiceInstanceName: summaoruapp-html5-app-host-service
+              ServiceKeyName: summaoruapp_html_repo_host-key
+              sap.cloud.service: summaoruapprouter
+            - Authentication: OAuth2UserTokenExchange
+              Name: summaoruapprouter_uaa_summaoruapp
+              ServiceInstanceName: summaoruapp-xsuaa-service
+              ServiceKeyName: uaa_summaoruapp-key
+              sap.cloud.service: summaoruapprouter
+          existing_destinations_policy: ignore
+    build-parameters:
+      no-source: true
+  - name: summaoruapp-app-content
+    type: com.sap.application.content
+    path: .
+    requires:
+      - name: summaoruapp_html_repo_host
+        parameters:
+          content-target: true
+    build-parameters:
+      build-result: resources
+      requires:
+        - artifacts:
+            - namespsummaoruappui.zip
+          name: namespsummaoruappui
+          target-path: resources/
+  - name: namespsummaoruappui
+    type: html5
+    path: app/summaoruappui
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm install
+        - npm run build:cf
+      supported-platforms:
+        []
+resources:
+  - name: summaoruapp-db
+    type: com.sap.xs.hdi-container
+    parameters:
+      service: hana
+      service-plan: hdi-shared
+  - name: summaoruapp-destination-service
+    type: org.cloudfoundry.managed-service
+    parameters:
+      config:
+        HTML5Runtime_enabled: true
+        init_data:
+          instance:
+            destinations:
+              - Authentication: NoAuthentication
+                Name: ui5
+                ProxyType: Internet
+                Type: HTTP
+                URL: https://ui5.sap.com
+            existing_destinations_policy: update
+        version: 1.0.0
+      service: destination
+      service-name: summaoruapp-destination-service
+      service-plan: lite
+  - name: summaoruapp_html_repo_host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-name: summaoruapp-html5-app-host-service
+      service-plan: app-host
+  - name: uaa_summaoruapp
+    type: org.cloudfoundry.managed-service
+    parameters:
+      path: ./xs-security.json
+      service: xsuaa
+      service-name: summaoruapp-xsuaa-service
+      service-plan: application
+      config:
+        xsappname: summaoruapp-${org}-${space}
+        tenant-mode: dedicated
 parameters:
   deploy_mode: html5-repo
   enable-parallel-deployments: true
 build-parameters:
   before-all:
-  - builder: custom
-    commands:
-    - npm ci
-    - npx cds build --production
+    - builder: custom
+      commands:
+        - npm ci
+        - npx cds build --production
